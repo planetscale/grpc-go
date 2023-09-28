@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"math"
 	"net/url"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1457,6 +1456,7 @@ func (ac *addrConn) tryAllAddrs(ctx context.Context, addrs []resolver.Address, c
 		if err == nil {
 			return nil
 		}
+		fmt.Printf("========== AAAAA tryAllAddrs (%d): failed current: %+v ; all: %+v", len(addrs), addr, addrs)
 		if firstConnErr == nil {
 			firstConnErr = err
 		}
@@ -1514,7 +1514,6 @@ func (ac *addrConn) createTransport(ctx context.Context, addr resolver.Address, 
 		// newTr is either nil, or closed.
 		hcancel()
 		channelz.Warningf(logger, ac.channelzID, "grpc: addrConn.createTransport failed to connect to %s. Err: %v", addr, err)
-		debug.PrintStack()
 		return err
 	}
 
