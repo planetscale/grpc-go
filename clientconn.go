@@ -1457,7 +1457,7 @@ func (ac *addrConn) tryAllAddrs(ctx context.Context, addrs []resolver.Address, c
 		if err == nil {
 			return nil
 		}
-		fmt.Fprintf(os.Stderr, "========== AAAAA tryAllAddrs (%d): failed current: %+v ; all: %+v", len(addrs), addr, addrs)
+		fmt.Fprintf(os.Stderr, "========== AAAAA tryAllAddrs (%d): failed current: %+v ; all: %+v\n", len(addrs), addr, addrs)
 		if firstConnErr == nil {
 			firstConnErr = err
 		}
