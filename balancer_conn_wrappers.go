@@ -21,7 +21,6 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -374,8 +373,7 @@ func (acbw *acBalancerWrapper) UpdateAddresses(addrs []resolver.Address) {
 }
 
 func (acbw *acBalancerWrapper) Connect() {
-	stack := debug.Stack()
-	go acbw.ac.connect(stack)
+	go acbw.ac.connect()
 }
 
 func (acbw *acBalancerWrapper) Shutdown() {
