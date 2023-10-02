@@ -1017,7 +1017,7 @@ func (cc *ClientConn) incrCallsFailed() {
 // connect starts creating a transport.
 // It does nothing if the ac is not IDLE.
 // TODO(bar) Move this to the addrConn section.
-func (ac *addrConn) connect() error {
+func (ac *addrConn) connect(debugStack []byte) error {
 	ac.mu.Lock()
 	if ac.state == connectivity.Shutdown {
 		if logger.V(2) {
@@ -1035,7 +1035,7 @@ func (ac *addrConn) connect() error {
 	}
 	ac.mu.Unlock()
 
-	ac.resetTransport()
+	ac.resetTransport(debugStack)
 	return nil
 }
 
@@ -1107,7 +1107,7 @@ func (ac *addrConn) updateAddrs(addrs []resolver.Address) {
 
 	// Since we were connecting/connected, we should start a new connection
 	// attempt.
-	go ac.resetTransport()
+	go ac.resetTransport(nil)
 }
 
 // getServerName determines the serverName to be used in the connection
@@ -1357,7 +1357,7 @@ func (ac *addrConn) adjustParams(r transport.GoAwayReason) {
 	}
 }
 
-func (ac *addrConn) resetTransport() {
+func (ac *addrConn) resetTransport(debugStack []byte) {
 	ac.mu.Lock()
 	acCtx := ac.ctx
 	if acCtx.Err() != nil {
@@ -1388,7 +1388,7 @@ func (ac *addrConn) resetTransport() {
 	ac.updateConnectivityState(connectivity.Connecting, nil)
 	ac.mu.Unlock()
 
-	if err := ac.tryAllAddrs(acCtx, addrs, connectDeadline); err != nil {
+	if err := ac.tryAllAddrs(acCtx, addrs, connectDeadline, debugStack); err != nil {
 		ac.cc.resolveNow(resolver.ResolveNowOptions{})
 		ac.mu.Lock()
 		if acCtx.Err() != nil {
@@ -1433,7 +1433,7 @@ func (ac *addrConn) resetTransport() {
 // tryAllAddrs tries to creates a connection to the addresses, and stop when at
 // the first successful one. It returns an error if no address was successfully
 // connected, or updates ac appropriately with the new transport.
-func (ac *addrConn) tryAllAddrs(ctx context.Context, addrs []resolver.Address, connectDeadline time.Time) error {
+func (ac *addrConn) tryAllAddrs(ctx context.Context, addrs []resolver.Address, connectDeadline time.Time, debugStack []byte) error {
 	var firstConnErr error
 	for _, addr := range addrs {
 		if ctx.Err() != nil {
@@ -1453,7 +1453,7 @@ func (ac *addrConn) tryAllAddrs(ctx context.Context, addrs []resolver.Address, c
 
 		channelz.Infof(logger, ac.channelzID, "Subchannel picks a new address %q to connect", addr.Addr)
 
-		err := ac.createTransport(ctx, addr, copts, connectDeadline)
+		err := ac.createTransport(ctx, addr, copts, connectDeadline, debugStack)
 		if err == nil {
 			return nil
 		}
@@ -1471,7 +1471,7 @@ func (ac *addrConn) tryAllAddrs(ctx context.Context, addrs []resolver.Address, c
 // createTransport creates a connection to addr. It returns an error if the
 // address was not successfully connected, or updates ac appropriately with the
 // new transport.
-func (ac *addrConn) createTransport(ctx context.Context, addr resolver.Address, copts transport.ConnectOptions, connectDeadline time.Time) error {
+func (ac *addrConn) createTransport(ctx context.Context, addr resolver.Address, copts transport.ConnectOptions, connectDeadline time.Time, debugStack []byte) error {
 	addr.ServerName = ac.cc.getServerName(addr)
 	hctx, hcancel := context.WithCancel(ctx)
 
@@ -1514,7 +1514,7 @@ func (ac *addrConn) createTransport(ctx context.Context, addr resolver.Address, 
 		}
 		// newTr is either nil, or closed.
 		hcancel()
-		channelz.Warningf(logger, ac.channelzID, "grpc: addrConn.createTransport failed to connect to %s. Err: %v", addr, err)
+		channelz.Warningf(logger, ac.channelzID, "grpc: addrConn.createTransport failed to connect to %s. Err: %v\n\nDEBUG STACK:\n%s", addr, err, debugStack)
 		return err
 	}
 
