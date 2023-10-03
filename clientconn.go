@@ -942,6 +942,7 @@ func (cc *ClientConn) newAddrConn(addrs []resolver.Address, opts balancer.NewSub
 		resetBackoff: make(chan struct{}),
 		stateChan:    make(chan struct{}),
 	}
+	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] newAddrConn cc = %p, ac = %p, addrs = %+v\n", cc, ac, addrs)
 	ac.ctx, ac.cancel = context.WithCancel(cc.ctx)
 	// Track ac in cc. This needs to be done before any getTransport(...) is called.
 	cc.mu.Lock()
@@ -1244,6 +1245,7 @@ func (cc *ClientConn) ResetConnectBackoff() {
 
 // Close tears down the ClientConn and all underlying connections.
 func (cc *ClientConn) Close() error {
+	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] ClientConn.Close() cc = %p\n", cc)
 	defer func() {
 		cc.cancel()
 		<-cc.csMgr.pubSub.Done()
@@ -1458,7 +1460,6 @@ func (ac *addrConn) tryAllAddrs(ctx context.Context, addrs []resolver.Address, c
 		if err == nil {
 			return nil
 		}
-		fmt.Fprintf(os.Stderr, "========== AAAAA tryAllAddrs (%d): failed current: %+v ; all: %+v\n", len(addrs), addr, addrs)
 		if firstConnErr == nil {
 			firstConnErr = err
 		}
@@ -1515,6 +1516,7 @@ func (ac *addrConn) createTransport(ctx context.Context, addr resolver.Address, 
 		}
 		// newTr is either nil, or closed.
 		hcancel()
+		fmt.Fprintf(os.Stderr, "[GRPCDEBUG] createTransport err ac = %p, cc = %p\n", ac, ac.cc)
 		channelz.Warningf(logger, ac.channelzID, "grpc: addrConn.createTransport failed to connect to %s. Err: %v, stack: %s", addr, err, debug.Stack())
 		return err
 	}
@@ -1671,6 +1673,7 @@ func (ac *addrConn) getTransport(ctx context.Context) (transport.ClientTransport
 // Note that tearDown doesn't remove ac from ac.cc.conns, so the addrConn struct
 // will leak. In most cases, call cc.removeAddrConn() instead.
 func (ac *addrConn) tearDown(err error) {
+	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] tearDown ac = %p, cc = %p, err = %v\n", ac, ac.cc, err)
 	ac.mu.Lock()
 	if ac.state == connectivity.Shutdown {
 		ac.mu.Unlock()
@@ -1875,6 +1878,7 @@ func (cc *ClientConn) parseTargetAndFindResolver() error {
 	}
 	cc.parsedTarget = parsedTarget
 	cc.resolverBuilder = rb
+	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] parseTargetAndFindResolver cc = %p, target = %s, parsedTarget = %+v\n", cc, cc.target, cc.parsedTarget)
 	return nil
 }
 
