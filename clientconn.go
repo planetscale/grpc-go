@@ -183,7 +183,9 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	chainUnaryClientInterceptors(cc)
 	chainStreamClientInterceptors(cc)
 
+	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] DialContext: target=%v, cc.dops.block=%v, stack=%s", target, cc.dopts.block, debug.Stack())
 	defer func() {
+		fmt.Fprintf(os.Stderr, "[GRPCDEBUG] DialContext defer err=%v, stack=%s", err, debug.Stack())
 		if err != nil {
 			cc.Close()
 		}
@@ -194,7 +196,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 
 	cc.csMgr = newConnectivityStateManager(cc.ctx, cc.channelzID)
 
-	if err := cc.validateTransportCredentials(); err != nil {
+	if err = cc.validateTransportCredentials(); err != nil {
 		return nil, err
 	}
 
@@ -238,7 +240,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	}
 
 	// Determine the resolver to use.
-	if err := cc.parseTargetAndFindResolver(); err != nil {
+	if err = cc.parseTargetAndFindResolver(); err != nil {
 		return nil, err
 	}
 	if err = cc.determineAuthority(); err != nil {
@@ -262,7 +264,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	}
 
 	// This creates the name resolver, load balancer, blocking picker etc.
-	if err := cc.exitIdleMode(); err != nil {
+	if err = cc.exitIdleMode(); err != nil {
 		return nil, err
 	}
 
