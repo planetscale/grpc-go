@@ -942,7 +942,8 @@ func (cc *ClientConn) newAddrConn(addrs []resolver.Address, opts balancer.NewSub
 		resetBackoff: make(chan struct{}),
 		stateChan:    make(chan struct{}),
 	}
-	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] newAddrConn cc = %p, ac = %p, addrs = %+v\n", cc, ac, addrs)
+	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] newAddrConn cc = %p, ac = %p, addrs = %+v, stack=%s\n", cc, ac, addrs, debug.Stack())
+
 	ac.ctx, ac.cancel = context.WithCancel(cc.ctx)
 	// Track ac in cc. This needs to be done before any getTransport(...) is called.
 	cc.mu.Lock()
