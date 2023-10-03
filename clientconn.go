@@ -1517,7 +1517,7 @@ func (ac *addrConn) createTransport(ctx context.Context, addr resolver.Address, 
 		}
 		// newTr is either nil, or closed.
 		hcancel()
-		fmt.Fprintf(os.Stderr, "[GRPCDEBUG] createTransport err ac = %p, cc = %p\n", ac, ac.cc)
+		fmt.Fprintf(os.Stderr, "[GRPCDEBUG] createTransport err ac = %p, cc = %p, addr = %v\n", ac, ac.cc, addr)
 		channelz.Warningf(logger, ac.channelzID, "grpc: addrConn.createTransport failed to connect to %s. Err: %v, stack: %s", addr, err, debug.Stack())
 		return err
 	}
@@ -1879,7 +1879,7 @@ func (cc *ClientConn) parseTargetAndFindResolver() error {
 	}
 	cc.parsedTarget = parsedTarget
 	cc.resolverBuilder = rb
-	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] parseTargetAndFindResolver cc = %p, target = %s, parsedTarget = %+v\n", cc, cc.target, cc.parsedTarget)
+	fmt.Fprintf(os.Stderr, "[GRPCDEBUG] parseTargetAndFindResolver cc = %p, target = %s, parsedTarget = %+v, stack = %s\n", cc, cc.target, cc.parsedTarget, debug.Stack())
 	return nil
 }
 
